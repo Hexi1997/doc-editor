@@ -29,6 +29,15 @@
       "prettier"
     ]
   },
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged",
+      "commit-msg": "commitlint -E HUSKY_GIT_PARAMS" 
+    }
+  },
+  "lint-staged": {
+    "*.{js,css,md,ts,tsx}": "prettier --write"
+  },
   "browserslist": {
     "production": [
       ">0.2%",
@@ -39,16 +48,7 @@
       "last 1 chrome version",
       "last 1 firefox version",
       "last 1 safari version"
-    ],
-    "husky": {
-      "hooks": {
-        "pre-commit": "lint-staged",
-        "commit-msg": "commitlint -E HUSKY_GIT_PARAMS" 
-      }
-    },
-    "lint-staged": {
-      "*.{js,css,md,ts,tsx}": "prettier --write"
-    }
+    ]
   },
   "devDependencies": {
     "@commitlint/cli": "^12.1.1",
