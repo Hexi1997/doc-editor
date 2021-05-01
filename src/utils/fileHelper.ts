@@ -1,4 +1,4 @@
-const fs = require("fs");
+const fs = window.require("fs");
 const FileHelper = {
   readFile: (path: string) => {
     return new Promise((resolve, reject) => {

@@ -1,6 +1,6 @@
 import { IFile } from "../types";
-const path = require("path");
-const { app } = require("electron").remote;
+const path = window.require("path");
+const { app } = window.require("electron").remote;
 const Store = window.require("electron-store");
 const store = new Store();
 // store.delete("files");

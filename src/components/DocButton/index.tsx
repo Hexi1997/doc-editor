@@ -3,6 +3,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import React, { memo, useCallback } from "react";
 import { ButtonType, IFile } from "../../types";
 import { v4 as uuid } from "uuid";
+const { dialog } = window.require("electron").remote;
 
 interface IProps {
   type: ButtonType;
@@ -49,7 +50,7 @@ export default memo(function DocButton({ type, addFile }: IProps) {
       addFile(newFile);
     } else if (type === "import") {
       //导入，渲染进程使用remote打开对话框
-      window.require("elecrton").remote.dialog.showOpenDialog(
+      dialog.showOpenDialog(
         {
           title: "选择导入的markdown文件",
           properties: ["openfile", "multiSelections"],
