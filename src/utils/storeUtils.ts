@@ -19,8 +19,26 @@ export const addFileToStore = (file: IFile) => {
     id: file.id,
     path: path.join(saveLocation, file.title + ".md"),
     createAt: file.createAt,
+    fileQiniuStatus: file.fileQiniuStatus,
+    updateTime: file.updateTime,
   };
   store.set("files", [...oriFiles, newFile]);
+};
+
+/**
+ * 更新文件内容
+ * @param id 文件id
+ * @param obj 要更新的内容
+ */
+export const updateFileInStore = (id: string, obj: object) => {
+  const files = (store.get("files") || []) as IFile[];
+  const newFiles = files.map((file) => {
+    if (file.id === id) {
+      file = { ...file, ...obj };
+    }
+    return file;
+  });
+  store.set("files", newFiles);
 };
 
 /**
@@ -33,6 +51,8 @@ export const changeFileNameOnStore = (file: IFile) => {
     id: file.id,
     path: path.join(saveLocation, file.title + ".md"),
     createAt: file.createAt,
+    fileQiniuStatus: file.fileQiniuStatus,
+    updateTime: file.updateTime,
   };
   const index = oriFiles.findIndex((item: any) => item.id === file.id);
   oriFiles.splice(index, 1, newFile);
@@ -55,4 +75,34 @@ export const deleteFileOnStore = (file: IFile) => {
 export const getFilesInfoFromStore = () => {
   const files = store.get("files") || [];
   return files;
+};
+
+type canAutoUploadType = "yes" | "no" | "no-set";
+
+/**
+ * 判断是否能够进行自动同步，返回值有三种
+ * yes设置了自动上传并且配置了密钥信息
+ * no:设置了自动上传但是没有配置密钥信息（一般不会出现这种情况)
+ * no-set:没有设置自动上传
+ */
+export const canAutoUpload = (): canAutoUploadType => {
+  const upload = store.get("autoupload");
+  const qiniuInfo = store.get("qiniu");
+  if (upload && qiniuInfo) {
+    return "yes";
+  }
+  if (upload && !qiniuInfo) {
+    return "no";
+  }
+  if (!upload) {
+    return "no-set";
+  }
+  return "no";
+};
+
+/**
+ * 判断ak\sk\桶名称是否都配置
+ */
+export const judgeQiniuInfoSet = () => {
+  return !!store.get("qiniu");
 };

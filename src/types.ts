@@ -35,6 +35,14 @@ export interface IFile {
    * 搜索状态，为true则显示，为false则不显示，默认为true
    */
   searchShow: boolean;
+  /**
+   * 本地数据是否与七牛云数据同步
+   */
+  fileQiniuStatus: FileQiniuStatusType;
+  /**
+   * 文件更新时间
+   */
+  updateTime: number;
 }
 
 export interface IFlattenFiles {
@@ -42,6 +50,10 @@ export interface IFlattenFiles {
 }
 export type ActiveStatus = "active" | "unactive";
 export type SaveStatus = "unsave" | "saved";
+export type FileQiniuStatusType =
+  | "unuploaded"
+  | "loaded-sync"
+  | "loaded-not-sync";
 export type FileType = "md" | "doc" | "xls" | "xlsx" | "ppt";
 
 export type ButtonType = "import" | "new";

@@ -8,6 +8,7 @@ import React, {
 } from "react";
 import { faSearch, faTimes } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import useIpcRenderer from "../../hooks/useIpcRender";
 
 interface IProps {
   searchFiles: (txt: string) => void;
@@ -23,6 +24,9 @@ export default memo(function FileSearch({ searchFiles }: IProps) {
     setValue("");
     searchFiles("");
   }, [searchFiles]);
+
+  //搜索快捷键
+
   useEffect(() => {
     const handleInputEvent = (ev: any) => {
       const { keyCode } = ev;
@@ -33,7 +37,6 @@ export default memo(function FileSearch({ searchFiles }: IProps) {
       if (keyCode === 13 && active) {
         //enter的keycode是13
         searchFiles(inputRef.current?.value as string);
-        // console.log("应该执行文件查询", inputRef.current?.value);
       }
     };
     //如果active，添加esc监听
@@ -44,6 +47,18 @@ export default memo(function FileSearch({ searchFiles }: IProps) {
     };
   }, [active, searchFiles, quitSearch]);
 
+  const beginSearch = useCallback(() => {
+    //定时器中让setActive让input组件渲染完毕，然后才可以成功执行focus
+    setTimeout(() => {
+      setActive(true);
+      inputRef.current?.focus();
+    }, 0);
+  }, [setActive, inputRef]);
+
+  //添加搜索快捷键
+  useIpcRenderer({
+    "file-search": beginSearch,
+  });
   return (
     <div
       className="pl-2 pr-2"
@@ -80,13 +95,7 @@ export default memo(function FileSearch({ searchFiles }: IProps) {
         <FontAwesomeIcon
           style={{ width: "1.1rem", height: "1.1rem" }}
           icon={faSearch}
-          onClick={(_) => {
-            //定时器中让setActive让input组件渲染完毕，然后才可以成功执行focus
-            setTimeout(() => {
-              setActive(true);
-              inputRef.current?.focus();
-            }, 0);
-          }}
+          onClick={beginSearch}
         />
       )}
       {active && (

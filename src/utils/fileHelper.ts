@@ -43,6 +43,23 @@ const FileHelper = {
       });
     });
   },
+
+  /**
+   * 拷贝文件
+   * @param oriPath 原始路径
+   * @param targetPath 新路径
+   */
+  copyFile: (oriPath: string, targetPath: string) => {
+    return new Promise((resolve, reject) => {
+      fs.copyFile(oriPath, targetPath, (err: any) => {
+        if (!err) {
+          resolve(targetPath);
+        } else {
+          reject(err);
+        }
+      });
+    });
+  },
 };
 
 export default FileHelper;

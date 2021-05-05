@@ -9,13 +9,17 @@ import { useState } from "react";
 import DocButton from "./components/DocButton";
 import Editor from "./components/Editor";
 import { getFilesInfoFromStore } from "./utils/storeUtils";
+import useIpcRenderer from "./hooks/useIpcRender";
+const { ipcRenderer } = window.require("electron");
+const { dialog, getCurrentWindow } = window.require("electron").remote;
 function App() {
   //自顶向下的数据流
   const [files, setFiles] = useState<IFile[]>([]);
+  //全部上传到云端的loading状态
+  const [isLoading, setLoading] = useState(false);
   //更新文件列表--包括删除、更新
   const updateFiles = useCallback((newFiles: IFile[]) => {
     setFiles(newFiles);
-    console.log(newFiles);
   }, []);
 
   useEffect(() => {
@@ -31,6 +35,8 @@ function App() {
         activeStatus: "unactive",
         saveStatus: "saved",
         searchShow: true,
+        fileQiniuStatus: item.fileQiniuStatus,
+        updateTime: item.updateTime,
       };
       return file;
     });
@@ -38,11 +44,11 @@ function App() {
   }, []);
 
   //新增文件列表
-  const addFile = useCallback(
-    (newFile: IFile) => {
+  const addFiles = useCallback(
+    (newFiles: IFile[]) => {
       //不能重复点击新建，首先判断是否已经有为空
       if (files.filter((item) => item.title === "").length === 0) {
-        setFiles([...files, newFile]);
+        setFiles([...files, ...newFiles]);
       }
     },
     [setFiles, files]
@@ -70,6 +76,35 @@ function App() {
     [files]
   );
 
+  //上传全部文件到七牛云
+  const uploadAllFiles = useCallback(() => {
+    setLoading(true);
+    const fileNames = files.map((file) => file.title);
+    ipcRenderer.send("upload-all-files-in-main", fileNames);
+    ipcRenderer.once(
+      "upload-all-files-in-main-reply",
+      (event: any, bSus: boolean) => {
+        setLoading(false);
+        if (bSus) {
+          dialog.showMessageBox(getCurrentWindow(), {
+            type: "info",
+            title: "上传成功",
+            message: `全部成功上传`,
+          });
+        } else {
+          dialog.showErrorBox(
+            "上传失败",
+            "请确认网络情况良好并且七牛云参数设置正确"
+          );
+        }
+      }
+    );
+  }, [files]);
+
+  //使用IpcRender监听upload-all-files事件
+  useIpcRenderer({
+    "upload-all-files-in-render": uploadAllFiles,
+  });
   return (
     <div className="container-fluid">
       <div className="row" style={{ height: "100vh" }}>
@@ -82,9 +117,9 @@ function App() {
           {/* 底部按钮组 */}
           <div className="bottom-btns d-flex justify-content-between">
             {/* 新建文件 */}
-            <DocButton type="new" addFile={addFile} />
+            <DocButton type="new" addFiles={addFiles} Files={files} />
             {/* 导入文件 */}
-            <DocButton type="import" addFile={addFile} />
+            <DocButton type="import" addFiles={addFiles} Files={files} />
           </div>
         </div>
         {/* 右侧区域 */}
@@ -94,6 +129,18 @@ function App() {
           {/* 编辑器区域 */}
           <Editor Files={files} updateFiles={updateFiles} />
         </div>
+      </div>
+      <div
+        className="spinner-border"
+        role="status"
+        style={{
+          visibility: isLoading ? "visible" : "hidden",
+          position: "absolute",
+          top: "50%",
+          left: "50%",
+        }}
+      >
+        <span className="sr-only">Loading...</span>
       </div>
     </div>
   );

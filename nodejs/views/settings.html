@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>设置</title>
+    <link
+      rel="stylesheet"
+      type="text/css"
+      href="../../node_modules/bootstrap/dist/css/bootstrap.min.css"
+    />
+    <link rel="stylesheet" type="text/css" href="./settings.css" />
+  </head>
+  <body class="p-3">
+    <h5 style="font-weight: bold">设置</h5>
+    <ul class="nav nav-tabs">
+      <li class="nav-item">
+        <a
+          class="nav-link active"
+          id="nav-qiniu"
+          href="#content-qiniu"
+          style="font-size: 13px"
+        >
+          七牛云设置
+        </a>
+      </li>
+      <li class="nav-item">
+        <a
+          class="nav-link"
+          id="nav-file"
+          href="#content-file"
+          style="font-size: 14px"
+        >
+          文件存储位置
+        </a>
+      </li>
+    </ul>
+    <div class="tab-content" id="myTabContent">
+      <div
+        class="tab-pane active"
+        id="content-qiniu"
+        role="tabpanel"
+        aria-labelledby="qiniu-tab"
+      >
+        <div class="row settings-list">
+          <div class="col-3">Access Key</div>
+          <div class="col-9" style="display: flex; flex-direction: column">
+            <input class="pl-2" type="text" id="ak" placeholder="Access Key" />
+            <span style="font-size: 12px; color: #ccc"
+              >请在七牛云密钥管理下查看</span
+            >
+          </div>
+        </div>
+        <div class="row setting-list">
+          <div class="col-3">Serect Key</div>
+          <div class="col-9" style="display: flex; flex-direction: column">
+            <input
+              class="pl-2"
+              type="password"
+              id="sk"
+              placeholder="Secret Key"
+            />
+            <span style="font-size: 12px; color: #ccc"
+              >请在七牛云密钥管理下查看</span
+            >
+          </div>
+        </div>
+        <div class="row setting-list mt-2">
+          <div class="col-3">Bucket名称</div>
+          <div class="col-9" style="display: flex; flex-direction: column">
+            <input
+              class="pl-2"
+              type="text"
+              id="bucket"
+              placeholder="Bucket 名称"
+            />
+          </div>
+        </div>
+      </div>
+      <div
+        class="tab-pane"
+        id="content-file"
+        role="tabpanel"
+        aria-labelledby="file-tab"
+      >
+        文件设置
+      </div>
+    </div>
+    <button
+      id="save"
+      type="button"
+      class="btn btn-primary mt-3"
+      style="font-size: 14px"
+    >
+      保存
+    </button>
+    <script src="./settings.js" type="text/javascript"></script>
+  </body>
+</html>
