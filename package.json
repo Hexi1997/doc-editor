@@ -1,7 +1,7 @@
 {
   "name": "md-online-editor",
   "main": "main.js",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": true,
   "dependencies": {
     "@electron/remote": "^1.1.0",
@@ -41,7 +41,9 @@
     "prepack": "npm run build",
     "pack": "electron-builder --dir",
     "dist": "electron-builder",
-    "predist": "npm run build"
+    "predist": "npm run build",
+    "release": "cross-env GH_TOKEN=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 electron-builder",
+    "prerelease": "npm run build"
   },
   "description": "Online MarkDown Editor Using React + Electron + Qiniu Cloud Service",
   "author": {
@@ -51,6 +53,7 @@
   "repository": {
     "url": "https://github.com/Hexi1997/doc-editor.git"
   },
+  "publish":["github"],
   "homepage": "./",
   "build": {
     "appId": "mdOnlineEditor",
