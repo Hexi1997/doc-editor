@@ -8,8 +8,13 @@ import TabNav from "./components/TabNav";
 import { useState } from "react";
 import DocButton from "./components/DocButton";
 import Editor from "./components/Editor";
-import { getFilesInfoFromStore } from "./utils/storeUtils";
+import {
+  addFilesToStore,
+  getFilesInfoFromStore,
+  updateFileInStore,
+} from "./utils/storeUtils";
 import useIpcRenderer from "./hooks/useIpcRender";
+import { v4 as uuid } from "uuid";
 const { ipcRenderer } = window.require("electron");
 const { dialog, getCurrentWindow } = window.require("electron").remote;
 function App() {
@@ -22,7 +27,7 @@ function App() {
     setFiles(newFiles);
   }, []);
 
-  useEffect(() => {
+  const getFilesFromStore = useCallback(() => {
     let storeFiles: any = getFilesInfoFromStore();
     const FilesLocal = storeFiles.map((item: any, index: any) => {
       let file: IFile = {
@@ -41,7 +46,69 @@ function App() {
       return file;
     });
     setFiles(FilesLocal);
-  }, []);
+  }, [setFiles]);
+
+  useEffect(() => {
+    getFilesFromStore();
+  }, [getFilesFromStore]);
+
+  //下载全部文件到本地后，更新store和Files
+  const updateFilesAndStoreWhenDownAll = useCallback(
+    (event: any, downloadObj: any) => {
+      console.log("全部下载到本地成功，开始更新electron-store", downloadObj);
+      //step 1: update electron-store
+      const newFilesNames = [];
+      const updateFilesNames = [];
+      for (let i in downloadObj) {
+        if (downloadObj[i] === "new") {
+          newFilesNames.push(i);
+        } else {
+          updateFilesNames.push(i);
+        }
+      }
+      if (newFilesNames.length > 0) {
+        const newFiles: IFile[] = newFilesNames.map((name) => {
+          const dateNow = Date.now();
+          return {
+            title: name.replace(".md", ""),
+            id: uuid(),
+            body: "",
+            createAt: dateNow,
+            fileType: "md",
+            openStatus: false,
+            activeStatus: "unactive",
+            saveStatus: "saved",
+            searchShow: true,
+            fileQiniuStatus: "loaded-sync",
+            updateTime: dateNow,
+          };
+        });
+        addFilesToStore(newFiles);
+      }
+      if (updateFilesNames.length > 0) {
+        //更新文件
+        updateFilesNames.forEach((name) => {
+          const current = files.find(
+            (file) => file.title + ".md" === name
+          ) as IFile;
+          updateFileInStore(current.id, {
+            fileQiniuStatus: "loaded-sync",
+            updateTime: Date.now(),
+          });
+        });
+      }
+      //step 2: let render process update files and electron-store
+      getFilesFromStore();
+
+      //step 3: tip
+      dialog.showMessageBox(getCurrentWindow(), {
+        type: "info",
+        title: "下载成功",
+        message: `下载成功，当前文件和云文件同步`,
+      });
+    },
+    [files, getFilesFromStore]
+  );
 
   //新增文件列表
   const addFiles = useCallback(
@@ -104,6 +171,10 @@ function App() {
   //使用IpcRender监听upload-all-files事件
   useIpcRenderer({
     "upload-all-files-in-render": uploadAllFiles,
+    "down-all-update-files-and-store": updateFilesAndStoreWhenDownAll,
+    "set-load-status": (event: any, bLoading: boolean) => {
+      setLoading(bLoading);
+    },
   });
   return (
     <div className="container-fluid">

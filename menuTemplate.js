@@ -81,7 +81,7 @@ var template = [
         enabled: qiniuEnable,
         label: "从云端下载到本地",
         click: function () {
-          console.log("从云端下载到本地");
+          ipcMain.emit("download-all-files-to-local");
         },
       },
     ],

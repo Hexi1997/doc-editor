@@ -20,7 +20,7 @@ import {
   updateFileInStore,
 } from "../../utils/storeUtils";
 const { ipcRenderer } = window.require("electron");
-const { dialog } = window.require("electron").remote;
+const { dialog, shell } = window.require("electron").remote;
 const path = window.require("path");
 
 interface IProps {
@@ -28,7 +28,6 @@ interface IProps {
   updateFiles: (newFile: IFile[]) => void;
 }
 export default memo(function FileList({ Files, updateFiles }: IProps) {
-  const [hoverFileId, setHoverFileId] = useState<null | string>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
   //处于编辑状态的File的id，为null则代表没有File处于编辑状态
   const [editorFileId, setEditorFileId] = useState<null | string>(null);
@@ -165,7 +164,7 @@ export default memo(function FileList({ Files, updateFiles }: IProps) {
   }, [updateFiles, Files]);
 
   const handleDelete = useCallback(
-    (item: IFile) => {
+    (item: IFile, bDelteQiniu: boolean) => {
       return () => {
         //更新store
         deleteFileOnStore(item);
@@ -175,7 +174,7 @@ export default memo(function FileList({ Files, updateFiles }: IProps) {
         FileHelper.deleteFile(path.join(saveLocation, item.title + ".md"));
         //如果当前文件被上传到七牛云过，则通知主线程删除七牛云文件
         //如果没有被上传过，则不删除
-        if (item.fileQiniuStatus !== "unuploaded") {
+        if (item.fileQiniuStatus !== "unuploaded" && bDelteQiniu) {
           ipcRenderer.send("qiniu-delete-file", item.title);
         }
       };
@@ -216,14 +215,40 @@ export default memo(function FileList({ Files, updateFiles }: IProps) {
         },
       },
       {
-        label: "删除",
+        label: "删除(本地+云端)",
         click: () => {
           const fileListNode = getParentNode(nodeRef.current, "file-list");
           if (fileListNode) {
             const editorFile = Files.find(
               (item) => item.id === fileListNode.dataset.id
             ) as IFile;
-            handleDelete(editorFile)();
+            handleDelete(editorFile, true)();
+          }
+        },
+      },
+      {
+        label: "删除(本地)",
+        click: () => {
+          const fileListNode = getParentNode(nodeRef.current, "file-list");
+          if (fileListNode) {
+            const editorFile = Files.find(
+              (item) => item.id === fileListNode.dataset.id
+            ) as IFile;
+            handleDelete(editorFile, false)();
+          }
+        },
+      },
+      {
+        label: "在文件夹中打开",
+        click: () => {
+          const fileListNode = getParentNode(nodeRef.current, "file-list");
+          if (fileListNode) {
+            const editorFile = Files.find(
+              (item) => item.id === fileListNode.dataset.id
+            ) as IFile;
+            shell.showItemInFolder(
+              path.join(saveLocation, editorFile.title + ".md")
+            );
           }
         },
       },
@@ -447,7 +472,6 @@ export default memo(function FileList({ Files, updateFiles }: IProps) {
         onMouseLeave={(_) => {
           //删除为title为空的File
           deleteEmptyTitleFile();
-          setHoverFileId(null);
           setEditorFileId(null);
           setEditorFileTitle("");
         }}
@@ -461,7 +485,6 @@ export default memo(function FileList({ Files, updateFiles }: IProps) {
                   display: item.searchShow ? "flex" : "none",
                 }}
                 key={item.id}
-                onMouseEnter={(_) => setHoverFileId(item.id)}
                 onDoubleClick={handleDoubleClick(item)}
                 className="file-list list-group-item justify-content-between flex-nowrap"
                 //储存信息方便原生DOM获取
@@ -489,31 +512,6 @@ export default memo(function FileList({ Files, updateFiles }: IProps) {
                     </span>
                   </div>
                 )}
-
-                <div
-                  className={
-                    item.id === hoverFileId && item.id !== editorFileId
-                      ? "d-none"
-                      : "d-none"
-                  }
-                >
-                  <button
-                    type="button"
-                    onClick={handleEditor(item)}
-                    className="btn btn-primary mr-1 rounded-sm"
-                    style={{ padding: ".2rem", fontSize: "0.8rem" }}
-                  >
-                    编辑
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleDelete(item)}
-                    className="btn btn-danger rounded-sm"
-                    style={{ padding: ".2rem", fontSize: "0.8rem" }}
-                  >
-                    删除
-                  </button>
-                </div>
               </li>
             );
           })}

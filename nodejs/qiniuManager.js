@@ -231,6 +231,27 @@ class QiniuManager {
   }
 
   /**
+   * 下载多个文件到本地
+   * @param {string} key 要下载的文件数组
+   * @param {string[]} savePath 保存路径(不包含文件名)
+   * @param {boolean} bRefreshFile 是否刷新文件后再下载（默认false)
+   */
+  downloadFiles(keyArr, savePath, bRefreshFile = false) {
+    return new Promise((resolve, reject) => {
+      const promises = keyArr.map((key) => {
+        return this.downloadFile(key, savePath, bRefreshFile);
+      });
+      Promise.all(promises)
+        .then((v) => {
+          resolve(v);
+        })
+        .catch((e) => {
+          reject(e);
+        });
+    });
+  }
+
+  /**
    * 文件重命名
    * @param {string} originName 原始文件名
    * @param {string} currentName 目标文件名
@@ -271,6 +292,19 @@ class QiniuManager {
       this.bucketManager.stat(
         this.bucketname,
         key,
+        this.handleCallback(resolve, reject)
+      );
+    });
+  }
+
+  /**
+   * 获取云存储中全部文件信息
+   */
+  getAllFilesInfo() {
+    return new Promise((resolve, reject) => {
+      this.bucketManager.listPrefix(
+        this.bucketname,
+        {},
         this.handleCallback(resolve, reject)
       );
     });

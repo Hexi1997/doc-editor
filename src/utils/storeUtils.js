@@ -46,7 +46,27 @@ var addFileToStore = function (file) {
   };
   store.set("files", __spreadArray(__spreadArray([], oriFiles), [newFile]));
 };
+
+/**
+ * 多个新增文件保存到store
+ */
 exports.addFileToStore = addFileToStore;
+var addFilesToStore = function (files) {
+  var oriFiles = store.get("files") || [];
+  var newFiles = files.map(function (file) {
+    var newFile = {
+      title: file.title,
+      id: file.id,
+      path: path.join(exports.saveLocation, file.title + ".md"),
+      createAt: file.createAt,
+      fileQiniuStatus: file.fileQiniuStatus,
+      updateTime: file.updateTime,
+    };
+    return newFile;
+  });
+  store.set("files", __spreadArray(__spreadArray([], oriFiles), newFiles));
+};
+exports.addFilesToStore = addFilesToStore;
 /**
  * 更新文件内容
  * @param id 文件id

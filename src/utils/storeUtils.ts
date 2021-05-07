@@ -26,6 +26,25 @@ export const addFileToStore = (file: IFile) => {
 };
 
 /**
+ * 多个新增文件保存到store
+ */
+export const addFilesToStore = (files: IFile[]) => {
+  var oriFiles = store.get("files") || [];
+  var newFiles = files.map((file) => {
+    var newFile = {
+      title: file.title,
+      id: file.id,
+      path: path.join(saveLocation, file.title + ".md"),
+      createAt: file.createAt,
+      fileQiniuStatus: file.fileQiniuStatus,
+      updateTime: file.updateTime,
+    };
+    return newFile;
+  });
+  store.set("files", [...oriFiles, ...newFiles]);
+};
+
+/**
  * 更新文件内容
  * @param id 文件id
  * @param obj 要更新的内容

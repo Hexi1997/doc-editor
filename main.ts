@@ -1,14 +1,15 @@
 const { app, BrowserWindow, Menu, ipcMain, dialog } = require("electron");
 const isDev = require("electron-is-dev");
 const Store = require("electron-store");
+const path = require("path");
 const store = new Store();
 import template from "./menuTemplate";
 import { QiniuManager } from "./nodejs/qiniuManager";
 
-let mainWindow;
+let mainWindow = null;
 app.on("ready", () => {
   //运行devtron浏览器插件  add
-  require("devtron").install();
+  // require("devtron").install();
   mainWindow = new BrowserWindow({
     webPreferences: {
       nodeIntegration: true,
@@ -18,7 +19,9 @@ app.on("ready", () => {
     backgroundColor: "#fff",
   });
   mainWindow.maximize();
-  const urlLocation = isDev ? "http://localhost:3000" : "todo";
+  const urlLocation = isDev
+    ? "http://localhost:3000"
+    : `file://${path.join(__dirname, "./build/index.html")}`;
   mainWindow.loadURL(urlLocation);
   //设置菜单
   let menu = Menu.buildFromTemplate(template as any);
@@ -190,6 +193,69 @@ app.on("ready", () => {
       .catch((err) => {
         console.log("全部上传失败");
         event.reply("upload-all-files-in-main-reply", false);
+      });
+  });
+  ipcMain.on("download-all-files-to-local", function () {
+    //step zero: set loading status
+    mainWindow.webContents.send("set-load-status", true);
+    //step one: get files in electron-store
+    var Store = require("electron-store");
+    var store = new Store();
+    var localFiles = store.get("files") || [];
+    //step two: get files in qiniu
+    var downloadObj = {};
+    manage
+      .getAllFilesInfo()
+      .then((v) => {
+        console.log("获取七牛云全部文件信息成功");
+        //step three: filter markdown files
+        var mdFiles = v.items.filter((item) => {
+          return item.mimeType === "text/markdown";
+        });
+        //step four: compare putTime(qiniu) and updateTime(local) , get download list
+        downloadObj = mdFiles.reduce((obj, current) => {
+          var currentFile = localFiles.find((file) => {
+            return file.title + ".md" === current.key;
+          });
+          console.log("currentFile", currentFile);
+          if (
+            !currentFile ||
+            currentFile.updateTime * 10000 < current.putTime
+          ) {
+            //如果currentFile不存在，代表该文件在本地不存在，但是在七牛云存在，将其下载到本地
+            //如果本地的updateTime小于七牛云的putTime，代表七牛云文件新，需要下载
+            obj[current.key] = currentFile ? "update" : "new";
+          }
+          return obj;
+        }, {});
+        //step five: start download files
+        return manage.downloadFiles(
+          Object.keys(downloadObj),
+          app.getPath("documents"),
+          true
+        );
+      })
+      .then((v) => {
+        if (Object.keys(downloadObj).length === 0) {
+          dialog.showMessageBox(mainWindow, {
+            type: "info",
+            title: "无需下载",
+            message: "没有需要下载的文件，当前的文件已经是最新",
+          });
+          console.log("没有需要下载的文件，当前的文件已经是最新");
+        } else {
+          mainWindow.webContents.send(
+            "down-all-update-files-and-store",
+            downloadObj
+          );
+        }
+      })
+      .catch((e) => {
+        dialog.showErrorBox("下载失败", "下载文件失败，请确认网络情况良好");
+        console.log("获取七牛云全部文件信息失败", e);
+      })
+      .finally((v) => {
+        mainWindow.webContents.send("set-load-status", false);
       });
   });
 });
