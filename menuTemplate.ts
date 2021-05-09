@@ -1,4 +1,7 @@
-const { ipcMain, BrowserWindow } = require("electron");
+const { ipcMain, BrowserWindow, shell, dialog } = require("electron");
+const isDev = require("electron-is-dev");
+const process = require("process");
+const path = require("path");
 const Store = require("electron-store");
 const store = new Store();
 //判断store中是否有qiniu相关配置
@@ -110,14 +113,36 @@ let template = [
             focusedWindow.setFullScreen(!focusedWindow.isFullScreen());
         },
       },
+      // {
+      //   label: "切换开发者工具",
+      //   accelerator: (function () {
+      //     if (process.platform === "darwin") return "Alt+Command+I";
+      //     else return "Ctrl+Shift+I";
+      //   })(),
+      //   click: function (_: any, focusedWindow) {
+      //     if (focusedWindow) focusedWindow.toggleDevTools();
+      //   },
+      // },
+    ],
+  },
+  {
+    label: "关于软件",
+    submenu: [
       {
-        label: "切换开发者工具",
-        accelerator: (function () {
-          if (process.platform === "darwin") return "Alt+Command+I";
-          else return "Ctrl+Shift+I";
-        })(),
+        label: "使用帮助",
+        accelerator: "CmdOrCtrl+H",
         click: function (_: any, focusedWindow) {
-          if (focusedWindow) focusedWindow.toggleDevTools();
+          //使用默认程序打开doc
+          let docPath = path.join(
+            process.cwd(),
+            "/resources/docs",
+            "readme.docx"
+          );
+          if (isDev) {
+            docPath = path.join(process.cwd(), "/docs", "readme.docx");
+          }
+
+          shell.openItem(docPath);
         },
       },
     ],

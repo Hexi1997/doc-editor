@@ -52,7 +52,7 @@ export default memo(function FileList({ Files, updateFiles }: IProps) {
       if (currentFile?.body === "" || bUpdateFromQiniu) {
         const localFilePath = path.join(
           saveLocation,
-          currentFile?.title + ".md"
+          currentFile?.title + "." + currentFile.fileType
         );
         //读取文件内容并且设置
         FileHelper.readFile(localFilePath)
@@ -111,6 +111,28 @@ export default memo(function FileList({ Files, updateFiles }: IProps) {
   const handleDoubleClick = useCallback(
     (item: IFile) => {
       return () => {
+        //每次只允许打开一个xlsx文件
+        const xlsxOpenFileLength = Files.filter(
+          (file) => file.fileType === "xlsx" && file.openStatus === true
+        ).length;
+        if (xlsxOpenFileLength === 1) {
+          dialog.showErrorBox(
+            "xlsx独占编辑",
+            "由于编辑器限制，xlsx必须单独编辑"
+          );
+          return;
+        }
+        if (
+          item.fileType === "xlsx" &&
+          Files.filter((file) => file.openStatus === true).length > 0
+        ) {
+          dialog.showErrorBox(
+            "xlsx独占编辑",
+            "由于编辑器限制，xlsx必须单独编辑"
+          );
+          return;
+        }
+
         //触发doubleclick
         //双击读取文件位置获取文件内容
         const currentFile = Files.find((file) => file.id === item.id);
@@ -121,7 +143,7 @@ export default memo(function FileList({ Files, updateFiles }: IProps) {
           currentFile?.fileQiniuStatus !== "unuploaded"
         ) {
           //访问七牛云判断是否要下载文件
-          const key = currentFile?.title + ".md";
+          const key = currentFile?.title + "." + currentFile?.fileType;
           ipcRenderer.send("qiniu-get-file-info", {
             key,
             updateTime: currentFile?.updateTime,
@@ -171,11 +193,16 @@ export default memo(function FileList({ Files, updateFiles }: IProps) {
         //更新内存
         updateFiles(Files.filter((i) => i.id !== item.id));
         //删除本地文件
-        FileHelper.deleteFile(path.join(saveLocation, item.title + ".md"));
+        FileHelper.deleteFile(
+          path.join(saveLocation, item.title + "." + item.fileType)
+        );
         //如果当前文件被上传到七牛云过，则通知主线程删除七牛云文件
         //如果没有被上传过，则不删除
         if (item.fileQiniuStatus !== "unuploaded" && bDelteQiniu) {
-          ipcRenderer.send("qiniu-delete-file", item.title);
+          ipcRenderer.send(
+            "qiniu-delete-file",
+            `${item.title}.${item.fileType}`
+          );
         }
       };
     },
@@ -247,7 +274,10 @@ export default memo(function FileList({ Files, updateFiles }: IProps) {
               (item) => item.id === fileListNode.dataset.id
             ) as IFile;
             shell.showItemInFolder(
-              path.join(saveLocation, editorFile.title + ".md")
+              path.join(
+                saveLocation,
+                editorFile.title + "." + editorFile.fileType
+              )
             );
           }
         },
@@ -336,7 +366,7 @@ export default memo(function FileList({ Files, updateFiles }: IProps) {
           (item) => item.id === editorFileId
         );
         const updateFile = Files[updateFileIndex];
-        const newFilePath = `${saveLocation}\\${editorFileTitle}.md`;
+        const newFilePath = `${saveLocation}\\${editorFileTitle}.${updateFile.fileType}`;
         const uploadType = canAutoUpload();
 
         //如何判断是修改文件名enter还是新增空白文件输入标题enter
@@ -385,14 +415,14 @@ export default memo(function FileList({ Files, updateFiles }: IProps) {
             });
         } else {
           //修改文件名enter，同步修改本地文件名
-          const oriPath = `${saveLocation}\\${updateFile.title}.md`;
+          const oriPath = `${saveLocation}\\${updateFile.title}.${updateFile.fileType}`;
           FileHelper.renameFile(oriPath, newFilePath)
             .then((v) => {
               //本地文件名改完后，发送网络请求更新七牛云文件名称
               if (uploadType === "yes") {
                 ipcRenderer.send("qiniu-rename-file", {
-                  oriName: updateFile.title,
-                  curName: editorFileTitle,
+                  oriName: updateFile.title + "." + updateFile.fileType,
+                  curName: editorFileTitle + "." + updateFile.fileType,
                 });
                 ipcRenderer.once(
                   "qiniu-rename-file-reply",

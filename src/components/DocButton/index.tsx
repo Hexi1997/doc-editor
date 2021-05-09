@@ -1,7 +1,7 @@
 import { faFileImport, faPlus } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import React, { memo, useCallback, useRef } from "react";
-import { ButtonType, FileQiniuStatusType, IFile } from "../../types";
+import { ButtonType, FileQiniuStatusType, FileType, IFile } from "../../types";
 import { v4 as uuid } from "uuid";
 import FileHelper from "../../utils/fileHelper";
 import {
@@ -10,8 +10,9 @@ import {
   saveLocation,
 } from "../../utils/storeUtils";
 import useIpcRenderer from "../../hooks/useIpcRender";
+import { importAndCopyXlsxByPath } from "../../utils/xlsxHelper";
 const { ipcRenderer } = window.require("electron");
-const { dialog } = window.require("electron").remote;
+const { dialog, getCurrentWindow } = window.require("electron").remote;
 const { basename, extname, join } = window.require("path");
 
 interface IProps {
@@ -50,12 +51,13 @@ export default memo(function DocButton({ type, addFiles, Files }: IProps) {
       //如果paths是数组并且有数值，将其添加到文件中即可,构建File对象并将其添加
       const newFiles: IFile[] = [];
       targetPaths.forEach((path) => {
+        const ext = extname(path);
         const newFile: IFile = {
           id: uuid(),
           body: "",
-          title: basename(path, extname(path)),
+          title: basename(path, ext),
           createAt: Date.now(),
-          fileType: "md",
+          fileType: ext.replace(".", ""),
           openStatus: false,
           activeStatus: "unactive",
           saveStatus: "saved",
@@ -79,21 +81,51 @@ export default memo(function DocButton({ type, addFiles, Files }: IProps) {
       return () => {
         console.log("进入handleClick");
         if (type === "new") {
-          //新建一个file对象
-          const newFile: IFile = {
-            id: uuid(),
-            body: "## 请输入内容",
-            title: "",
-            fileType: "md",
-            createAt: Date.now(),
-            openStatus: false,
-            activeStatus: "unactive",
-            saveStatus: "saved",
-            searchShow: true,
-            fileQiniuStatus: "unuploaded",
-            updateTime: Date.now(),
-          };
-          addFiles([newFile]);
+          dialog.showMessageBox(
+            getCurrentWindow(),
+            {
+              type: "question",
+              title: "请选择创建的文件类型？",
+              message: "markdown文件或者xlsx文件",
+              buttons: ["Cancel", "MarkDown", "Xlsx"],
+            },
+            (index: number) => {
+              // alert(index);
+              if (index === 0) return;
+              let body = "";
+              let fileType: FileType = "md";
+              switch (index) {
+                case 1:
+                  //md
+                  body = "## 请输入内容";
+                  fileType = "md";
+                  break;
+                case 2:
+                  //xlsx
+                  body = `{"title":"blank","lang":"zh","container":"luckysheet","data":[{"name":"Sheet1","config":{},"index":"1","status":"1","order":"0","luckysheet_select_save":[{"row":[3,3],"column":[2,2],"sheetIndex":1}],"zoomRatio":1,"showGridLines":"1","defaultColWidth":70,"defaultRowHeight":19,"celldata":[],"calcChain":[]}],"showinfobar":false}`;
+                  fileType = "xlsx";
+                  break;
+                default:
+                  break;
+              }
+
+              //新建一个file对象
+              const newFile: IFile = {
+                id: uuid(),
+                body,
+                title: "",
+                fileType,
+                createAt: Date.now(),
+                openStatus: false,
+                activeStatus: "unactive",
+                saveStatus: "saved",
+                searchShow: true,
+                fileQiniuStatus: "unuploaded",
+                updateTime: Date.now(),
+              };
+              addFiles([newFile]);
+            }
+          );
         } else if (type === "import") {
           //导入，渲染进程使用remote打开对话框
           console.log(importWindowRef.current);
@@ -103,7 +135,12 @@ export default memo(function DocButton({ type, addFiles, Files }: IProps) {
               {
                 title: "选择导入的markdown文件",
                 properties: ["openfile", "multiSelections"],
-                filters: [{ name: "Markdown files", extensions: ["md"] }],
+                filters: [
+                  {
+                    name: "Markdown files Or Xlsx files",
+                    extensions: ["md", "xlsx"],
+                  },
+                ],
               },
               (paths: any) => {
                 importWindowRef.current = false;
@@ -123,10 +160,17 @@ export default memo(function DocButton({ type, addFiles, Files }: IProps) {
                     alert("导入文件名不得重复");
                     return;
                   }
+                  debugger;
                   paths.forEach((path) => {
-                    //将当前文件复制并拷贝到指定位置
-                    const targetPath = join(saveLocation, basename(path));
-                    promises.push(FileHelper.copyFile(path, targetPath));
+                    const ext = extname(path);
+                    if (ext === ".md") {
+                      //markdown文件复制并拷贝到指定位置
+                      const targetPath = join(saveLocation, basename(path));
+                      promises.push(FileHelper.copyFile(path, targetPath));
+                    } else if (ext === ".xlsx") {
+                      //xlsx文件提取出option并且保存到指定位置
+                      promises.push(importAndCopyXlsxByPath(path));
+                    }
                   });
                   Promise.all(promises)
                     .then((targetPaths) => {

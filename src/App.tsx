@@ -17,6 +17,7 @@ import useIpcRenderer from "./hooks/useIpcRender";
 import { v4 as uuid } from "uuid";
 const { ipcRenderer } = window.require("electron");
 const { dialog, getCurrentWindow } = window.require("electron").remote;
+const { extname } = window.require("path");
 function App() {
   //自顶向下的数据流
   const [files, setFiles] = useState<IFile[]>([]);
@@ -27,15 +28,27 @@ function App() {
     setFiles(newFiles);
   }, []);
 
+  //根据id更新内容
+  // const updateFileById = useCallback(
+  //   (fileId: string, obj: object) => {
+  //     const index = files.findIndex((item) => item.id === fileId);
+  //     files.splice(index, 1, { ...files[index], ...obj });
+  //     setFiles(files);
+  //   },
+  //   [files, setFiles]
+  // );
+
   const getFilesFromStore = useCallback(() => {
     let storeFiles: any = getFilesInfoFromStore();
     const FilesLocal = storeFiles.map((item: any, index: any) => {
+      //根据path判断文件类型
+      const ext = extname(item.path).replace(".", "");
       let file: IFile = {
         id: item.id,
         title: item.title,
         body: "",
         createAt: item.createAt,
-        fileType: "md",
+        fileType: ext,
         openStatus: false,
         activeStatus: "unactive",
         saveStatus: "saved",
@@ -69,12 +82,14 @@ function App() {
       if (newFilesNames.length > 0) {
         const newFiles: IFile[] = newFilesNames.map((name) => {
           const dateNow = Date.now();
+          //根据path判断文件类型
+          const ext = extname(name).replace(".", "");
           return {
-            title: name.replace(".md", ""),
+            title: name.replace(`.${ext}`, ""),
             id: uuid(),
             body: "",
             createAt: dateNow,
-            fileType: "md",
+            fileType: ext,
             openStatus: false,
             activeStatus: "unactive",
             saveStatus: "saved",
@@ -89,7 +104,7 @@ function App() {
         //更新文件
         updateFilesNames.forEach((name) => {
           const current = files.find(
-            (file) => file.title + ".md" === name
+            (file) => file.title + "." + file.fileType === name
           ) as IFile;
           updateFileInStore(current.id, {
             fileQiniuStatus: "loaded-sync",
@@ -146,13 +161,20 @@ function App() {
   //上传全部文件到七牛云
   const uploadAllFiles = useCallback(() => {
     setLoading(true);
-    const fileNames = files.map((file) => file.title);
+    const fileNames = files.map((file) => file.title + "." + file.fileType);
     ipcRenderer.send("upload-all-files-in-main", fileNames);
     ipcRenderer.once(
       "upload-all-files-in-main-reply",
       (event: any, bSus: boolean) => {
         setLoading(false);
         if (bSus) {
+          //修改fileQiniuStatus
+          setFiles(
+            files.map((item) => ({
+              ...item,
+              fileQiniuStatus: "loaded-sync",
+            }))
+          );
           dialog.showMessageBox(getCurrentWindow(), {
             type: "info",
             title: "上传成功",

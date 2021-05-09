@@ -1,7 +1,7 @@
 {
   "name": "md-online-editor",
   "main": "main.js",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "private": true,
   "dependencies": {
     "@electron/remote": "^1.1.0",
@@ -22,6 +22,9 @@
     "concurrently": "^6.0.2",
     "electron-is-dev": "^2.0.0",
     "electron-store": "^4.0.0",
+    "luckyexcel": "^1.0.1",
+    "moment": "^2.29.1",
+    "moment-timezone": "^0.5.33",
     "qiniu": "^7.3.2",
     "react": "^17.0.2",
     "react-dom": "^17.0.2",
@@ -53,11 +56,13 @@
   "repository": {
     "url": "https://github.com/Hexi1997/doc-editor.git"
   },
-  "publish":["github"],
+  "publish": [
+    "github"
+  ],
   "homepage": "./",
   "build": {
     "appId": "mdOnlineEditor",
-    "productName": "在线MarkDown编辑器",
+    "productName": "在线文档编辑器",
     "copyright": "Copyright © year ${author}",
     "extends": null,
     "files": [
@@ -67,8 +72,13 @@
       "package.json",
       "main.js",
       "menuTemplate.js",
-      "assets/**/*"
+      "assets/**/*",
+      "docs/**/*"
     ],
+    "extraResources":  {
+      "from": "./docs/",
+      "to": "docs"
+    },
     "directories": {
       "buildResources": "assets"
     },

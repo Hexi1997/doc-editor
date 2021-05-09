@@ -39,7 +39,7 @@ var addFileToStore = function (file) {
   var newFile = {
     title: file.title,
     id: file.id,
-    path: path.join(exports.saveLocation, file.title + ".md"),
+    path: path.join(exports.saveLocation, file.title + "." + file.fileType),
     createAt: file.createAt,
     fileQiniuStatus: file.fileQiniuStatus,
     updateTime: file.updateTime,
@@ -57,7 +57,7 @@ var addFilesToStore = function (files) {
     var newFile = {
       title: file.title,
       id: file.id,
-      path: path.join(exports.saveLocation, file.title + ".md"),
+      path: path.join(exports.saveLocation, file.title + "." + file.fileType),
       createAt: file.createAt,
       fileQiniuStatus: file.fileQiniuStatus,
       updateTime: file.updateTime,
@@ -91,7 +91,7 @@ var changeFileNameOnStore = function (file) {
   var newFile = {
     title: file.title,
     id: file.id,
-    path: path.join(exports.saveLocation, file.title + ".md"),
+    path: path.join(exports.saveLocation, file.title + "." + file.fileType),
     createAt: file.createAt,
     fileQiniuStatus: file.fileQiniuStatus,
     updateTime: file.updateTime,

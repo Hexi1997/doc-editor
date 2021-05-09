@@ -92,7 +92,7 @@ app.on("ready", () => {
   //监听删除文件事件，删除七牛云同名文件
   ipcMain.on("qiniu-delete-file", (event: any, key: string) => {
     manage
-      .deleteFile(key + ".md")
+      .deleteFile(key)
       .then((v) => {
         console.log("已同步删除七牛云中文件", v);
       })
@@ -122,7 +122,7 @@ app.on("ready", () => {
     (event: any, args: { oriName: string; curName: string }) => {
       console.log(args);
       manage
-        .renameFile(args.oriName + ".md", args.curName + ".md")
+        .renameFile(args.oriName, args.curName)
         .then((v) => {
           console.log("重命名成功", v);
           event.reply("qiniu-rename-file-reply", true);
@@ -181,7 +181,7 @@ app.on("ready", () => {
   //监听主线程上传全部文件
   ipcMain.on("upload-all-files-in-main", (event: any, fileNames: string[]) => {
     const promises = fileNames.map((fileName) => {
-      const filePath = `${app.getPath("documents")}\\${fileName}.md`;
+      const filePath = `${app.getPath("documents")}\\${fileName}`;
       console.log(filePath);
       return manage.uploadFile(filePath);
     });
@@ -210,12 +210,16 @@ app.on("ready", () => {
         console.log("获取七牛云全部文件信息成功");
         //step three: filter markdown files
         var mdFiles = v.items.filter((item) => {
-          return item.mimeType === "text/markdown";
+          return (
+            item.mimeType === "text/markdown" ||
+            item.mimeType.includes("office")
+          );
         });
+
         //step four: compare putTime(qiniu) and updateTime(local) , get download list
         downloadObj = mdFiles.reduce((obj, current) => {
           var currentFile = localFiles.find((file) => {
-            return file.title + ".md" === current.key;
+            return path.basename(file.path) === current.key;
           });
           console.log("currentFile", currentFile);
           if (

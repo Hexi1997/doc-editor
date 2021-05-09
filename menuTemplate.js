@@ -2,7 +2,12 @@
 exports.__esModule = true;
 var _a = require("electron"),
   ipcMain = _a.ipcMain,
-  BrowserWindow = _a.BrowserWindow;
+  BrowserWindow = _a.BrowserWindow,
+  shell = _a.shell,
+  dialog = _a.dialog;
+var isDev = require("electron-is-dev");
+var process = require("process");
+var path = require("path");
 var Store = require("electron-store");
 var store = new Store();
 //判断store中是否有qiniu相关配置
@@ -107,14 +112,35 @@ var template = [
             focusedWindow.setFullScreen(!focusedWindow.isFullScreen());
         },
       },
+      // {
+      //   label: "切换开发者工具",
+      //   accelerator: (function () {
+      //     if (process.platform === "darwin") return "Alt+Command+I";
+      //     else return "Ctrl+Shift+I";
+      //   })(),
+      //   click: function (_: any, focusedWindow) {
+      //     if (focusedWindow) focusedWindow.toggleDevTools();
+      //   },
+      // },
+    ],
+  },
+  {
+    label: "关于软件",
+    submenu: [
       {
-        label: "切换开发者工具",
-        accelerator: (function () {
-          if (process.platform === "darwin") return "Alt+Command+I";
-          else return "Ctrl+Shift+I";
-        })(),
+        label: "使用帮助",
+        accelerator: "CmdOrCtrl+H",
         click: function (_, focusedWindow) {
-          if (focusedWindow) focusedWindow.toggleDevTools();
+          //使用默认程序打开doc
+          var docPath = path.join(
+            process.cwd(),
+            "/resources/docs",
+            "readme.docx"
+          );
+          if (isDev) {
+            docPath = path.join(process.cwd(), "/docs", "readme.docx");
+          }
+          shell.openItem(docPath);
         },
       },
     ],

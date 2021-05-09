@@ -17,7 +17,7 @@ export const addFileToStore = (file: IFile) => {
   const newFile = {
     title: file.title,
     id: file.id,
-    path: path.join(saveLocation, file.title + ".md"),
+    path: path.join(saveLocation, file.title + "." + file.fileType),
     createAt: file.createAt,
     fileQiniuStatus: file.fileQiniuStatus,
     updateTime: file.updateTime,
@@ -34,7 +34,7 @@ export const addFilesToStore = (files: IFile[]) => {
     var newFile = {
       title: file.title,
       id: file.id,
-      path: path.join(saveLocation, file.title + ".md"),
+      path: path.join(saveLocation, file.title + "." + file.fileType),
       createAt: file.createAt,
       fileQiniuStatus: file.fileQiniuStatus,
       updateTime: file.updateTime,
@@ -68,7 +68,7 @@ export const changeFileNameOnStore = (file: IFile) => {
   const newFile = {
     title: file.title,
     id: file.id,
-    path: path.join(saveLocation, file.title + ".md"),
+    path: path.join(saveLocation, file.title + "." + file.fileType),
     createAt: file.createAt,
     fileQiniuStatus: file.fileQiniuStatus,
     updateTime: file.updateTime,

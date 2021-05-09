@@ -1,8 +1,9 @@
 const fs = window.require("fs");
 const FileHelper = {
-  readFile: (path: string) => {
+  readFile: (path: string, bXlsx = false) => {
     return new Promise((resolve, reject) => {
-      fs.readFile(path, { encoding: "utf-8" }, (err: any, data: unknown) => {
+      const config = bXlsx ? {} : { encoding: "utf-8" };
+      fs.readFile(path, config, (err: any, data: unknown) => {
         if (!err) {
           resolve(data);
         } else {
