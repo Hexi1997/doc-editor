@@ -1,26 +1,127 @@
 {
-  "name": "doc-editor",
-  "version": "0.1.0",
+  "name": "md-online-editor",
+  "main": "main.js",
+  "version": "0.1.2",
   "private": true,
   "dependencies": {
+    "@electron/remote": "^1.1.0",
+    "@fortawesome/fontawesome-svg-core": "^1.2.35",
+    "@fortawesome/free-brands-svg-icons": "^5.15.3",
+    "@fortawesome/free-regular-svg-icons": "^5.15.3",
+    "@fortawesome/free-solid-svg-icons": "^5.15.3",
+    "@fortawesome/react-fontawesome": "^0.1.14",
     "@testing-library/jest-dom": "^5.11.4",
     "@testing-library/react": "^11.1.0",
     "@testing-library/user-event": "^12.1.10",
     "@types/jest": "^26.0.15",
-    "@types/node": "^12.0.0",
     "@types/react": "^17.0.0",
     "@types/react-dom": "^17.0.0",
+    "axios": "^0.21.1",
+    "bootstrap": "^4.6.0",
+    "classnames": "^2.3.1",
+    "concurrently": "^6.0.2",
+    "electron-is-dev": "^2.0.0",
+    "electron-store": "^4.0.0",
+    "luckyexcel": "^1.0.1",
+    "moment": "^2.29.1",
+    "moment-timezone": "^0.5.33",
+    "qiniu": "^7.3.2",
     "react": "^17.0.2",
     "react-dom": "^17.0.2",
     "react-scripts": "4.0.3",
+    "react-simplemde-editor": "^4.1.5",
+    "styled-components": "^5.2.3",
     "typescript": "^4.1.2",
+    "uuid": "^8.3.2",
     "web-vitals": "^1.0.1"
   },
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "dev": "concurrently  \"wait-on http://localhost:3000 && tsc main.ts && electron . --inspect\" \"cross-env BROWSER=none npm start\"",
+    "prepack": "npm run build",
+    "pack": "electron-builder --dir",
+    "dist": "electron-builder",
+    "predist": "npm run build",
+    "release": "cross-env GH_TOKEN=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 electron-builder",
+    "prerelease": "npm run build"
+  },
+  "description": "Online MarkDown Editor Using React + Electron + Qiniu Cloud Service",
+  "author": {
+    "name": "Hexi 1997",
+    "email": "18715156450@163.com"
+  },
+  "repository": {
+    "url": "https://github.com/Hexi1997/doc-editor.git"
+  },
+  "publish": [
+    "github"
+  ],
+  "homepage": "./",
+  "build": {
+    "appId": "mdOnlineEditor",
+    "productName": "在线文档编辑器",
+    "copyright": "Copyright © year ${author}",
+    "extends": null,
+    "files": [
+      "build/**/*",
+      "node_modules/**/*",
+      "nodejs/**/*",
+      "package.json",
+      "main.js",
+      "menuTemplate.js",
+      "assets/**/*",
+      "docs/**/*"
+    ],
+    "extraResources":  {
+      "from": "./docs/",
+      "to": "docs"
+    },
+    "directories": {
+      "buildResources": "assets"
+    },
+    "mac": {
+      "category": "public.app-category.productivity",
+      "artifactName": "${productName}-${version}-${arch}.${ext}"
+    },
+    "dmg": {
+      "background": "assets/appdmg.png",
+      "icon": "assets/icon.icns",
+      "iconSize": 100,
+      "contents": [
+        {
+          "x": 380,
+          "y": 280,
+          "type": "link",
+          "path": "/Applications"
+        },
+        {
+          "x": 110,
+          "y": 280,
+          "type": "file"
+        }
+      ],
+      "window": {
+        "width": 500,
+        "height": 500
+      }
+    },
+    "win": {
+      "target": [
+        "msi",
+        "nsis"
+      ],
+      "icon": "assets/icon.ico",
+      "artifactName": "${productName}-SetUp-${version}.${ext}",
+      "publisherName": "Hexi 1997"
+    },
+    "nsis": {
+      "allowToChangeInstallationDirectory": true,
+      "oneClick": false,
+      "perMachine": false
+    }
   },
   "eslintConfig": {
     "extends": [
@@ -32,7 +133,7 @@
   "husky": {
     "hooks": {
       "pre-commit": "lint-staged",
-      "commit-msg": "commitlint -E HUSKY_GIT_PARAMS" 
+      "commit-msg": "commitlint -E HUSKY_GIT_PARAMS"
     }
   },
   "lint-staged": {
@@ -53,9 +154,17 @@
   "devDependencies": {
     "@commitlint/cli": "^12.1.1",
     "@commitlint/config-conventional": "^12.1.1",
+    "@types/node": "^12.20.10",
+    "@types/styled-components": "^5.1.9",
+    "@types/uuid": "^8.3.0",
+    "cross-env": "^7.0.3",
+    "devtron": "^1.4.0",
+    "electron": "^5.0.6",
+    "electron-builder": "^22.11.1",
     "eslint-config-prettier": "^8.2.0",
     "husky": "^4.2.3",
     "lint-staged": "^10.0.8",
-    "prettier": "2.2.1"
+    "prettier": "2.2.1",
+    "wait-on": "^5.3.0"
   }
 }
